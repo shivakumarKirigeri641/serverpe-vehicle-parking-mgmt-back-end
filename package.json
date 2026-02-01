@@ -1,0 +1,30 @@
+{
+  "name": "serverpe-vehicle-parking-mgmt-back-end",
+  "version": "1.0.0",
+  "description": "Sample back-end project for vehicle parking management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shivakumarKirigeri641/serverpe-vehicle-parking-mgmt-back-end.git"
+  },
+  "author": "Shivakumar Kirigeri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shivakumarKirigeri641/serverpe-vehicle-parking-mgmt-back-end/issues"
+  },
+  "homepage": "https://github.com/shivakumarKirigeri641/serverpe-vehicle-parking-mgmt-back-end#readme",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^7.0.13",
+    "nodemon": "^3.1.11",
+    "pg": "^8.18.0"
+  }
+}

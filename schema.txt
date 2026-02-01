@@ -1,0 +1,190 @@
+========================================
+PARKING MANAGEMENT DATABASE SCHEMA
+========================================
+
+
+----------------------------------------
+TABLE: parkingfield
+----------------------------------------
+
+CREATE TABLE parkingfield (
+    id SERIAL PRIMARY KEY,
+
+    place_name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    district TEXT NOT NULL,
+    state_union TEXT NOT NULL,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_parkingfield_district
+ON parkingfield (district);
+
+CREATE INDEX idx_parkingfield_state_union
+ON parkingfield (state_union);
+
+CREATE OR REPLACE FUNCTION trg_parkingfield_before_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_parkingfield_updated_at
+BEFORE UPDATE ON parkingfield
+FOR EACH ROW
+EXECUTE FUNCTION trg_parkingfield_before_update();
+
+
+
+----------------------------------------
+TABLE: staff
+----------------------------------------
+
+CREATE TABLE staff (
+    id SERIAL PRIMARY KEY,
+
+    fkparkingfield INT NOT NULL,
+    emailid TEXT NOT NULL,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    is_admin BOOLEAN default false,
+
+    CONSTRAINT fk_staff_parkingfield
+        FOREIGN KEY (fkparkingfield)
+        REFERENCES parkingfield (id)
+        ON DELETE CASCADE        
+);
+
+CREATE UNIQUE INDEX idx_staff_emailid
+ON staff (emailid);
+
+CREATE INDEX idx_staff_fkparkingfield
+ON staff (fkparkingfield);
+
+CREATE OR REPLACE FUNCTION trg_staff_before_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_staff_updated_at
+BEFORE UPDATE ON staff
+FOR EACH ROW
+EXECUTE FUNCTION trg_staff_before_update();
+
+
+
+----------------------------------------
+TABLE: mock_vahan
+----------------------------------------
+
+CREATE TABLE mock_vahan (
+    id SERIAL PRIMARY KEY,
+
+    vehicle_number TEXT NOT NULL,
+    vehicle_type TEXT NOT NULL,
+    mobile_number TEXT NOT NULL,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX idx_mock_vahan_vehicle_number
+ON mock_vahan (vehicle_number);
+
+CREATE INDEX idx_mock_vahan_mobile_number
+ON mock_vahan (mobile_number);
+
+CREATE OR REPLACE FUNCTION trg_mock_vahan_before_save()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.vehicle_number := UPPER(NEW.vehicle_number);
+    NEW.vehicle_type   := UPPER(NEW.vehicle_type);
+    NEW.updated_at     := NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_mock_vahan_before_insert_update
+BEFORE INSERT OR UPDATE ON mock_vahan
+FOR EACH ROW
+EXECUTE FUNCTION trg_mock_vahan_before_save();
+
+
+
+----------------------------------------
+TABLE: vehicle_session
+----------------------------------------
+
+CREATE TABLE vehicle_session (
+    id SERIAL PRIMARY KEY,
+
+    fkparkingfield INT NOT NULL,
+    fkmock_vahan INT NOT NULL,
+    fkstaff INT NOT NULL,
+
+    exit_otp TEXT NULL,
+
+    entry_status BOOLEAN NOT NULL DEFAULT FALSE,
+    exit_status  BOOLEAN NOT NULL DEFAULT FALSE,
+
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_vehicle_session_parkingfield
+        FOREIGN KEY (fkparkingfield)
+        REFERENCES parkingfield (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_vehicle_session_mock_vahan
+        FOREIGN KEY (fkmock_vahan)
+        REFERENCES mock_vahan (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_vehicle_session_staff
+        FOREIGN KEY (fkstaff)
+        REFERENCES staff (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_vehicle_session_active
+ON vehicle_session (fkparkingfield, entry_status, exit_status);
+
+CREATE INDEX idx_vehicle_session_vehicle
+ON vehicle_session (fkmock_vahan);
+
+CREATE INDEX idx_vehicle_session_staff
+ON vehicle_session (fkstaff);
+
+CREATE INDEX idx_vehicle_session_exit_otp
+ON vehicle_session (exit_otp)
+WHERE exit_otp IS NOT NULL;
+
+CREATE UNIQUE INDEX uniq_active_vehicle_session
+ON vehicle_session (fkmock_vahan)
+WHERE entry_status = TRUE AND exit_status = FALSE;
+
+CREATE OR REPLACE FUNCTION trg_vehicle_session_before_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_vehicle_session_updated_at
+BEFORE UPDATE ON vehicle_session
+FOR EACH ROW
+EXECUTE FUNCTION trg_vehicle_session_before_update();
+
+
+========================================
+END OF SCHEMA
+========================================
