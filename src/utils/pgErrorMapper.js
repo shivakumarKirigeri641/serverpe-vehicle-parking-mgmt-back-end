@@ -39,12 +39,10 @@ module.exports = function mapPgError(err) {
         );
 
       default:
-        return new AppError(
-          "Database operation failed",
-          500,
-          "PG_UNKNOWN_ERROR",
-        );
+        return new AppError(err?.message, 500, "PG_UNKNOWN_ERROR");
     }
+  } else {
+    return new AppError(err?.message, 401, "CHECK_OUT_ERROR");
   }
 
   /* -------------------- UNKNOWN / RUNTIME ERROR -------------------- */

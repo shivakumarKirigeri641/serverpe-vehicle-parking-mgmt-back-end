@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { connectDb } = require("../database/connectDb");
 require("dotenv").config();
 
 const checkServerPeUser = async (req, res, next) => {
@@ -20,7 +21,12 @@ const checkServerPeUser = async (req, res, next) => {
 
     // Attach decoded data
     req.email = decoded.email;
-    req.mobile_number = decoded.mobile_number;
+    const pool = connectDb();
+    const result = await pool.query(`select *from staff where emailid=$1`, [
+      req.email,
+    ]);
+    req.parkingid = result.rows[0].id;
+    //req.mobile_number = decoded.mobile_number;
     next();
   } catch (err) {
     console.error("Auth Error:", err.message);
